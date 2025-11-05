@@ -284,8 +284,8 @@
 
   <script>
     // RTS播放地址（artc://协议）
-    const RTS_PLAY_URL1 = "artc://a.zhezhishiyigedemo.me/live/live?auth_key=1762314680-0-0-1f1a9fa873d0b1a12ff1957bedf3c7ac";
-    const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live?auth_key=1762318487-0-0-8e5b7da3581c66d46023d50c2927e6bf";
+    const RTS_PLAY_URL1 = "artc://a.zhezhishiyigedemo.me/live/live";
+    const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live";
     
     // 转推域名地址（用于标准协议兼容）
     const STANDARD_FLV_URL1 = "http://c.zhezhishiyigedemo.me/live/live.flv";
@@ -418,27 +418,37 @@
       bindPlayerEvents();
     }
     
+    <!-- ... existing code ... -->
     function bindPlayerEvents() {
       // Player 1
       player1.on("rtsTraceId", () => document.getElementById('status').textContent = '播放器1正在播放 (超低延迟)');
-      player1.on("rtsFallback", (e) => document.getElementById('status').textContent = '播放器1已降级: ' + e.paramData.reason);
+      player1.on("rtsFallback", (e) => {
+        document.getElementById('status').textContent = '播放器1已降级: ' + e.paramData.reason;
+        console.log('播放器1降级详情:', e.paramData);
+      });
       player1.on("error", (e) => {
         document.getElementById('status').textContent = '播放器1播放出错';
-        showError("播放器1错误: " + (e.message || JSON.stringify(e)));
+        showError("播放器1错误: " + (e.paramData ? e.paramData.error_msg + "(错误码: " + e.paramData.error_code + ")" : JSON.stringify(e)));
+        console.error("播放器1详细错误信息:", e);
       });
       player1.on("play", () => { document.getElementById('status').textContent = '播放器1正在播放'; updateButtonStates(); });
       player1.on("pause", () => { document.getElementById('status').textContent = '播放器1已暂停'; updateButtonStates(); });
       
       // Player 2
       player2.on("rtsTraceId", () => document.getElementById('status').textContent = '播放器2正在播放 (超低延迟)');
-      player2.on("rtsFallback", (e) => document.getElementById('status').textContent = '播放器2已降级: ' + e.paramData.reason);
+      player2.on("rtsFallback", (e) => {
+        document.getElementById('status').textContent = '播放器2已降级: ' + e.paramData.reason;
+        console.log('播放器2降级详情:', e.paramData);
+      });
       player2.on("error", (e) => {
         document.getElementById('status').textContent = '播放器2播放出错';
-        showError("播放器2错误: " + (e.message || JSON.stringify(e)));
+        showError("播放器2错误: " + (e.paramData ? e.paramData.error_msg + "(错误码: " + e.paramData.error_code + ")" : JSON.stringify(e)));
+        console.error("播放器2详细错误信息:", e);
       });
       player2.on("play", () => { document.getElementById('status').textContent = '播放器2正在播放'; updateButtonStates(); });
       player2.on("pause", () => { document.getElementById('status').textContent = '播放器2已暂停'; updateButtonStates(); });
     }
+
     
     function playBothVideos() { player1.play(); player2.play(); }
     function pauseBothVideos() { player1.pause(); player2.pause(); }
@@ -485,7 +495,7 @@
     
     function showError(message) {
       const el = document.getElementById('error-message');
-      el.textContent = message;
+      el.innerHTML = message; // 使用 innerHTML 以支持格式化错误信息
       el.style.display = 'block';
     }
     
