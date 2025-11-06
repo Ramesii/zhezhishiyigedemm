@@ -53,6 +53,7 @@
     .player-wrapper {
       flex: 1;
       min-width: 300px;
+      min-height: 200px; /* 防止容器塌陷 */
       position: relative;
     }
     
@@ -66,7 +67,7 @@
     .prism-player {
       width: 100%;
       height: 0;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 56.25%; /* 16:9 响应式 */
       position: relative;
       border-radius: 10px;
       overflow: hidden;
@@ -80,6 +81,7 @@
       left: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden; /* 关键：防止子元素溢出导致高度异常 */
     }
     
     .controls {
@@ -292,10 +294,9 @@
 
   <script>
     // 使用 HTTPS 地址避免混合内容问题
-    const RTS_PLAY_URL1 = "artc://a.zhezhishiyigedemo.me/live/live?auth_key=1762314680-0-0-1f1a9fa873d0b1a12ff1957bedf3c7ac";
-    const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live?auth_key=1762318487-0-0-8e5b7da3581c66d46023d50c2927e6bf";
+    const RTS_PLAY_URL1 = "artc://a.zhezhishiyigedemo.me/live/live";
+    const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live";
     
-    // 使用 HTTPS 转推地址
     const STANDARD_FLV_URL1 = "https://c.zhezhishiyigedemo.me/live/live.flv";
     const STANDARD_FLV_URL2 = "https://c.zhezhishiyigedemo.me/live/live2.flv";
     const STANDARD_HLS_URL1 = "https://c.zhezhishiyigedemo.me/live/live.m3u8";
@@ -306,7 +307,6 @@
     let latencyTimer;
     let playersReady = 0;
 
-    // 等待播放器脚本加载完成
     function waitForPlayer(callback) {
       if (window.Aliplayer) {
         callback();
@@ -315,7 +315,6 @@
       }
     }
 
-    // 初始化
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('url-display1').textContent = RTS_PLAY_URL1;
       document.getElementById('url-display2').textContent = RTS_PLAY_URL2;
@@ -333,7 +332,6 @@
       }
       document.getElementById('browser-info').textContent = browserInfo;
       
-      // 等待播放器加载完成
       waitForPlayer(function() {
         createPlayers();
         startLatencySimulation();
@@ -341,7 +339,6 @@
       });
     });
 
-    // 检测 GELLO 后端是否可用
     async function checkGelloBackend() {
       try {
         const res = await fetch('http://127.0.0.1:5001/health');
@@ -357,7 +354,6 @@
       }
     }
 
-    // 启动 GELLO 遥操作
     async function startGelloTeleop() {
       const btn = event.target;
       btn.disabled = true;
@@ -385,11 +381,10 @@
       }
     }
     
-    // 创建播放器
     function createPlayers() {
       const commonConfig = {
         isLive: true,
-        autoplay: false, // 改为手动播放避免自动播放策略限制
+        autoplay: false,
         useH5Prism: true,
         width: '100%',
         height: '100%',
@@ -398,15 +393,8 @@
         rtsSecure: true
       };
       
-      const config1 = {
-        ...commonConfig,
-        id: "J_prismPlayer1"
-      };
-      
-      const config2 = {
-        ...commonConfig,
-        id: "J_prismPlayer2"
-      };
+      const config1 = { ...commonConfig, id: "J_prismPlayer1" };
+      const config2 = { ...commonConfig, id: "J_prismPlayer2" };
       
       if (currentMode === 'low-latency') {
         config1.source = RTS_PLAY_URL1;
@@ -456,67 +444,53 @@
         document.getElementById('loading-message').style.display = 'none';
         document.getElementById('status').textContent = '播放器已就绪，点击播放按钮开始';
         updateButtonStates();
+
+        // 关键：强制重绘尺寸
+        setTimeout(() => {
+          if (player1 && typeof player1.resize === 'function') player1.resize();
+          if (player2 && typeof player2.resize === 'function') player2.resize();
+        }, 300);
       }
     }
     
     function bindPlayerEvents() {
       // Player 1 事件
-      player1.on("ready", () => {
-        console.log("播放器1准备就绪");
-      });
-      
       player1.on("rtsTraceId", () => {
         document.getElementById('status').textContent = '播放器1正在播放 (超低延迟)';
         hideError();
       });
-      
       player1.on("rtsFallback", (e) => {
-        document.getElementById('status').textContent = '播放器1已降级: ' + (e.paramData?.reason || '未知原因');
         showError("播放器1已降级到FLV模式，可能是RTS连接失败");
       });
-      
       player1.on("error", (e) => {
         const errorMsg = e.paramData ? JSON.stringify(e.paramData) : (e.message || '未知错误');
-        document.getElementById('status').textContent = '播放器1播放出错';
         showError("播放器1错误: " + errorMsg);
       });
-      
       player1.on("play", () => { 
         document.getElementById('status').textContent = '播放器1正在播放'; 
         updateButtonStates(); 
       });
-      
       player1.on("pause", () => { 
         document.getElementById('status').textContent = '播放器1已暂停'; 
         updateButtonStates(); 
       });
       
       // Player 2 事件
-      player2.on("ready", () => {
-        console.log("播放器2准备就绪");
-      });
-      
       player2.on("rtsTraceId", () => {
         document.getElementById('status').textContent = '播放器2正在播放 (超低延迟)';
         hideError();
       });
-      
       player2.on("rtsFallback", (e) => {
-        document.getElementById('status').textContent = '播放器2已降级: ' + (e.paramData?.reason || '未知原因');
         showError("播放器2已降级到FLV模式，可能是RTS连接失败");
       });
-      
       player2.on("error", (e) => {
         const errorMsg = e.paramData ? JSON.stringify(e.paramData) : (e.message || '未知错误');
-        document.getElementById('status').textContent = '播放器2播放出错';
         showError("播放器2错误: " + errorMsg);
       });
-      
       player2.on("play", () => { 
         document.getElementById('status').textContent = '播放器2正在播放'; 
         updateButtonStates(); 
       });
-      
       player2.on("pause", () => { 
         document.getElementById('status').textContent = '播放器2已暂停'; 
         updateButtonStates(); 
@@ -575,8 +549,10 @@
       const playBtn = document.getElementById('play-btn');
       const pauseBtn = document.getElementById('pause-btn');
       try {
-        playBtn.disabled = (player1 && player1.isPlaying()) || (player2 && player2.isPlaying());
-        pauseBtn.disabled = !((player1 && player1.isPlaying()) || (player2 && player2.isPlaying()));
+        const p1Playing = player1 && player1.isPlaying && player1.isPlaying();
+        const p2Playing = player2 && player2.isPlaying && player2.isPlaying();
+        playBtn.disabled = p1Playing || p2Playing;
+        pauseBtn.disabled = !(p1Playing || p2Playing);
       } catch (error) {
         console.error("更新按钮状态失败:", error);
       }
@@ -618,8 +594,8 @@
     
     window.addEventListener('beforeunload', function() {
       clearInterval(latencyTimer);
-      if (player1) player1.dispose();
-      if (player2) player2.dispose();
+      if (player1 && player1.dispose) player1.dispose();
+      if (player2 && player2.dispose) player2.dispose();
     });
   </script>
 </body>
