@@ -4,1151 +4,513 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>阿里云 RTS 双视频播放 + GELLO 遥操作</title>
-  <!-- 引入阿里云播放器 CSS -->
   <link rel="stylesheet" href="https://g.alicdn.com/de/prismplayer/2.9.9/skins/default/aliplayer-min.css" />
+  
   <style>
     :root {
-      --primary-color: #007AFF;
-      --primary-dark: #0056CC;
-      --secondary-color: #6C47FF;
-      --accent-color: #00C4CC;
-      --accent-purple: #9D4EDD;
-      --accent-pink: #FF2E93;
-      --dark-bg: #0A0E17;
-      --dark-card: #151A28;
-      --dark-border: #2A3445;
-      --text-primary: #F0F4F8;
-      --text-secondary: #B0B8C5;
-      --text-muted: #6B7280;
-      --success-color: #10B981;
-      --warning-color: #F59E0B;
-      --danger-color: #EF4444;
-      --glow-primary: 0 0 15px rgba(0, 122, 255, 0.5);
-      --glow-secondary: 0 0 15px rgba(108, 71, 255, 0.5);
-      --glow-accent: 0 0 15px rgba(0, 196, 204, 0.5);
+      /* Apple 风格色板 */
+      --bg-page: #F5F5F7;          /* 经典的 Apple 浅灰背景 */
+      --text-primary: #1D1D1F;     /* 近乎黑的深灰 */
+      --text-secondary: #86868B;   /* 标志性的次要文字灰 */
+      --accent-blue: #0071E3;      /* Apple 官网蓝 */
+      --glass-bg: rgba(255, 255, 255, 0.65); /* 磨砂玻璃背景 */
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --video-radius: 24px;        /* 大圆角 */
+      --panel-radius: 20px;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-font-smoothing: antialiased; /* 让字体在 Mac 上更清晰 */
     }
-    
+
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: 
-        radial-gradient(circle at 10% 20%, rgba(108, 71, 255, 0.15) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(0, 196, 204, 0.15) 0%, transparent 20%),
-        radial-gradient(circle at 50% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 30%),
-        linear-gradient(135deg, var(--dark-bg) 0%, #0F1525 100%);
+      font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: var(--bg-page);
       color: var(--text-primary);
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
       min-height: 100vh;
-      overflow-x: hidden;
-    }
-    
-    .container {
-      max-width: 1600px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* 科技感背景元素 */
-    .tech-bg-element {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
-    
-    .tech-grid {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: 
-        linear-gradient(rgba(15, 23, 42, 0.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 23, 42, 0.2) 1px, transparent 1px);
-      background-size: 50px 50px;
-      opacity: 0.3;
-    }
-    
-    .floating-element {
-      position: absolute;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-color), var(--accent-purple));
-      filter: blur(40px);
-      opacity: 0.1;
-      animation: float 20s infinite linear;
-    }
-    
-    .floating-element:nth-child(1) {
-      width: 300px;
-      height: 300px;
-      top: 10%;
-      left: 5%;
-      animation-delay: 0s;
-    }
-    
-    .floating-element:nth-child(2) {
-      width: 200px;
-      height: 200px;
-      top: 60%;
-      left: 80%;
-      animation-delay: -5s;
-      background: linear-gradient(135deg, var(--secondary-color), var(--accent-pink));
-    }
-    
-    .floating-element:nth-child(3) {
-      width: 150px;
-      height: 150px;
-      top: 80%;
-      left: 20%;
-      animation-delay: -10s;
-      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    }
-    
-    @keyframes float {
-      0% {
-        transform: translate(0, 0) rotate(0deg);
-      }
-      33% {
-        transform: translate(30px, -50px) rotate(120deg);
-      }
-      66% {
-        transform: translate(-20px, 20px) rotate(240deg);
-      }
-      100% {
-        transform: translate(0, 0) rotate(360deg);
-      }
-    }
-    
-    /* 头部区域 */
-    .header {
-      text-align: center;
-      padding: 30px 0;
-      margin-bottom: 20px;
-      position: relative;
-    }
-    
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 150px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-      border-radius: 3px;
-    }
-    
-    h1 {
-      font-size: 36px;
-      font-weight: 800;
-      margin-bottom: 15px;
-      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 20px rgba(108, 71, 255, 0.3);
-      letter-spacing: -0.5px;
-    }
-    
-    .subtitle {
-      font-size: 16px;
-      color: var(--text-secondary);
-      max-width: 700px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-    
-    /* 播放器区域 - 放大版 */
-    .players-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      margin-bottom: 30px;
-    }
-    
-    .player-wrapper {
-      flex: 1;
-      min-width: 500px; /* 增加最小宽度 */
-      position: relative;
-      background: linear-gradient(145deg, var(--dark-card), #101725);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      border: 1px solid var(--dark-border);
-    }
-    
-    .player-wrapper::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-      z-index: 2;
-    }
-    
-    .player-wrapper:hover {
-      transform: translateY(-8px);
-      box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.5),
-        var(--glow-primary);
-    }
-    
-    .player-title {
-      text-align: center;
-      padding: 18px;
-      font-size: 20px; /* 增大字体 */
-      font-weight: 600;
-      background: rgba(15, 23, 42, 0.6);
-      border-bottom: 1px solid var(--dark-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .player-title::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: left 0.5s;
-    }
-    
-    .player-wrapper:hover .player-title::before {
-      left: 100%;
-    }
-    
-    .player-title::after {
-      content: '●';
-      color: var(--accent-color);
-      margin-right: 10px;
-      font-size: 14px;
-      text-shadow: 0 0 8px var(--accent-color);
-    }
-    
-    #J_prismPlayer1, #J_prismPlayer2 {
-      width: 100%;
-      height: 0;
-      padding-bottom: 65%; /* 增加高度比例 */
-      position: relative;
-      background: #000;
-    }
-    
-    #J_prismPlayer1 .prism-player, #J_prismPlayer2 .prism-player {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    
-    /* 延迟显示 */
-    .latency-display {
-      text-align: center;
-      margin: 30px 0;
-      padding: 25px;
-      background: linear-gradient(145deg, var(--dark-card), #101725);
-      border-radius: 16px;
-      box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--dark-border);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .latency-display::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-    
-    .latency-value {
-      font-size: 48px;
-      font-weight: 800;
-      margin: 15px 0;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
-    }
-    
-    .latency-label {
-      font-size: 16px;
-      color: var(--text-secondary);
-      letter-spacing: 1px;
-    }
-    
-    /* 控制按钮 */
-    .controls {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin: 30px 0;
-    }
-    
-    button {
-      background: linear-gradient(145deg, var(--dark-card), #101725);
-      color: var(--text-primary);
-      border: 1px solid var(--dark-border);
-      padding: 12px 20px;
-      cursor: pointer;
-      font-size: 14px;
-      min-width: 140px;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-weight: 500;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 
-        0 5px 15px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-    
-    button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: left 0.5s;
-    }
-    
-    button:hover::before {
-      left: 100%;
-    }
-    
-    button:hover {
-      transform: translateY(-3px);
-      box-shadow: 
-        0 8px 20px rgba(0, 0, 0, 0.3),
-        var(--glow-primary);
-      border-color: var(--primary-color);
-    }
-    
-    button:active {
-      transform: translateY(1px);
-    }
-    
-    button.active {
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      border-color: var(--primary-color);
-      box-shadow: 
-        0 5px 15px rgba(0, 122, 255, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-    
-    button:disabled {
-      background: #1A2235;
-      color: var(--text-muted);
-      cursor: not-allowed;
-      border-color: var(--dark-border);
-      transform: none;
-      box-shadow: none;
-    }
-    
-    button:disabled::before {
-      display: none;
-    }
-    
-    /* 区域卡片 */
-    .section {
-      background: linear-gradient(145deg, var(--dark-card), #101725);
-      border-radius: 16px;
-      padding: 25px;
-      margin: 25px 0;
-      box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--dark-border);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .section::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-    
-    .section h3 {
-      margin-top: 0;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .section h3::before {
-      content: '';
-      display: block;
-      width: 4px;
-      height: 20px;
-      background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
-      border-radius: 2px;
-    }
-    
-    .section p {
-      margin: 12px 0;
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-    
-    /* 状态指示器 */
-    .status-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid var(--dark-border);
-    }
-    
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-    
-    .status-ready {
-      background-color: var(--success-color);
-      box-shadow: 0 0 8px var(--success-color);
-    }
-    
-    .status-warning {
-      background-color: var(--warning-color);
-      box-shadow: 0 0 8px var(--warning-color);
-    }
-    
-    .status-error {
-      background-color: var(--danger-color);
-      box-shadow: 0 0 8px var(--danger-color);
-    }
-    
-    .status-loading {
-      background-color: var(--accent-color);
-      box-shadow: 0 0 8px var(--accent-color);
-      animation: pulse 1.5s infinite;
-    }
-    
-    @keyframes pulse {
-      0% { 
-        opacity: 1; 
-        box-shadow: 0 0 8px var(--accent-color);
-      }
-      50% { 
-        opacity: 0.5; 
-        box-shadow: 0 0 12px var(--accent-color);
-      }
-      100% { 
-        opacity: 1; 
-        box-shadow: 0 0 8px var(--accent-color);
-      }
-    }
-    
-    /* 错误消息 */
-    .error-message {
-      color: var(--danger-color);
-      background-color: rgba(239, 68, 68, 0.1);
-      padding: 12px 15px;
-      margin-top: 15px;
-      border-radius: 12px;
-      border-left: 4px solid var(--danger-color);
-      display: none;
-      font-size: 14px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* 协议信息 */
-    .protocol-info {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    
-    .protocol-item {
-      flex: 1;
-      min-width: 250px;
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.6), rgba(10, 14, 23, 0.8));
-      border-radius: 12px;
-      padding: 20px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      border: 1px solid var(--dark-border);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .protocol-item::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-    
-    .protocol-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-    
-    .protocol-item h4 {
-      margin: 0 0 15px 0;
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--text-primary);
-    }
-    
-    .protocol-item ul {
-      list-style: none;
-      padding: 0;
-    }
-    
-    .protocol-item li {
-      margin-bottom: 10px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: flex-start;
-      line-height: 1.5;
-    }
-    
-    .protocol-item li::before {
-      content: '✓';
-      color: var(--accent-color);
-      margin-right: 8px;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-    
-    /* 信息网格 */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
-    }
-    
-    .info-item {
       display: flex;
       flex-direction: column;
-      padding: 15px;
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.5), rgba(10, 14, 23, 0.7));
-      border-radius: 12px;
-      border: 1px solid var(--dark-border);
-      transition: transform 0.3s ease;
-    }
-    
-    .info-item:hover {
-      transform: translateY(-3px);
-    }
-    
-    .info-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 5px;
-      letter-spacing: 0.5px;
-    }
-    
-    .info-value {
-      font-size: 14px;
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-    
-    /* 页脚 */
-    .footer {
-      text-align: center;
-      padding: 30px 0;
-      margin-top: 40px;
-      border-top: 1px solid var(--dark-border);
-      color: var(--text-muted);
-      font-size: 14px;
-      position: relative;
-    }
-    
-    .footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-    
-    .footer-logo {
-      display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      padding: 40px 20px;
     }
-    
-    .logo-icon {
-      width: 24px;
-      height: 24px;
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      border-radius: 6px;
+
+    /* 标题区域 - 极简大字 */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      max-width: 800px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .header h1 {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .header p {
+      font-size: 17px;
+      color: var(--text-secondary);
+      font-weight: 400;
+      line-height: 1.47059;
+    }
+
+    /* 视频区域 - 去除底板，直接悬浮 */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 30px;
+      width: 100%;
+      max-width: 1600px; /* 宽屏沉浸 */
+      margin-bottom: 40px;
+    }
+
+    .video-wrapper {
       position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+      background: #000;
+      border-radius: var(--video-radius);
       overflow: hidden;
+      /* 只有视频本身有阴影，没有外框 */
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); 
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
     }
-    
-    .logo-icon::after {
-      content: '';
+
+    .video-wrapper:hover {
+      transform: scale(1.01); /* 及其微小的放大 */
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+    }
+
+    /* 标签 - 悬浮在视频左上角 */
+    .video-label {
       position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      pointer-events: none;
+    }
+
+    #J_prismPlayer1, #J_prismPlayer2 {
+      position: absolute !important;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* 控制台 - 悬浮岛/磨砂玻璃风格 */
+    .control-island {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--panel-radius);
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+      display: grid;
+      grid-template-columns: 200px 1fr; /* 左侧数据，右侧控制 */
+      gap: 40px;
+      align-items: center;
+    }
+
+    /* 左侧延迟数据 */
+    .latency-display {
+      text-align: left;
+      padding-right: 30px;
+      border-right: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .latency-value {
+      font-size: 56px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .latency-unit {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-left: 5px;
+    }
+
+    .latency-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    /* 右侧按钮群 */
+    .controls-area {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Apple 风格按钮 */
+    button {
+      border: none;
+      background: rgba(0,0,0,0.05); /* 浅灰背景 */
+      color: var(--text-primary);
+      padding: 14px 24px;
+      border-radius: 980px; /* 胶囊形 */
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background: rgba(0,0,0,0.1);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* 主按钮 - 蓝色 */
+    button.primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #0077ED;
+      box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3);
     }
     
-    /* 响应式调整 */
-    @media (max-width: 1200px) {
-      .player-wrapper {
-        min-width: 450px;
-      }
+    /* 模式切换按钮状态 */
+    button.mode-active {
+      background: var(--text-primary);
+      color: white;
     }
-    
+
+    /* GELLO 特殊按钮 */
+    .gello-btn {
+      width: 100%;
+      justify-content: center;
+      background: linear-gradient(90deg, #FF2D55, #FF375F);
+      color: white;
+      font-weight: 600;
+    }
+    .gello-btn:hover {
+      background: linear-gradient(90deg, #FF375F, #FF2D55);
+      box-shadow: 0 4px 15px rgba(255, 45, 85, 0.3);
+    }
+
+    /* 底部信息条 - 极简 */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 20px;
+      padding: 0 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+    .dot.green { background: #34C759; box-shadow: 0 0 8px rgba(52, 199, 89, 0.4); }
+    .dot.yellow { background: #FF9500; }
+    .dot.red { background: #FF3B30; }
+    .dot.blue { background: var(--accent-blue); animation: pulse 2s infinite; }
+
+    @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 错误提示 */
+    #error-message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      color: #FF3B30;
+      font-weight: 500;
+      z-index: 100;
+      display: none;
+    }
+
+    /* 响应式 */
     @media (max-width: 1024px) {
-      .player-wrapper {
-        min-width: 400px;
-      }
-    }
-    
-    @media (max-width: 900px) {
-      .players-container {
-        flex-direction: column;
-      }
-      
-      .player-wrapper {
-        min-width: 100%;
-      }
-      
-      .protocol-info {
-        flex-direction: column;
-      }
-      
-      .controls {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      button {
-        width: 100%;
-        max-width: 300px;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 28px;
-      }
-      
-      .subtitle {
-        font-size: 14px;
-      }
-      
-      .player-title {
-        font-size: 18px;
-      }
-      
-      #J_prismPlayer1, #J_prismPlayer2 {
-        padding-bottom: 56.25%; /* 在小屏幕上恢复16:9比例 */
-      }
+      .video-grid { grid-template-columns: 1fr; }
+      .control-island { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+      .latency-display { padding-right: 0; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 20px; }
+      .btn-row { justify-content: center; }
+      .latency-value { font-size: 42px; }
     }
   </style>
 </head>
 <body>
-  <!-- 科技感背景元素 -->
-  <div class="tech-bg-element">
-    <div class="tech-grid"></div>
-    <div class="floating-element"></div>
-    <div class="floating-element"></div>
-    <div class="floating-element"></div>
+
+  <div id="error-message"></div>
+
+  <div class="header">
+    <h1>RTS Teleoperation</h1>
+    <p>超低延迟视觉反馈系统</p>
+  </div>
+
+  <div class="video-grid">
+    <div class="video-wrapper">
+      <div class="video-label">Camera 01</div>
+      <div id="J_prismPlayer1"></div>
+    </div>
+    <div class="video-wrapper">
+      <div class="video-label">Camera 02</div>
+      <div id="J_prismPlayer2"></div>
+    </div>
+  </div>
+
+  <div class="control-island">
+    <div class="latency-display">
+      <div>
+        <span class="latency-value" id="latency-value">--</span>
+        <span class="latency-unit">ms</span>
+      </div>
+      <div class="latency-label">Real-time Latency</div>
+    </div>
+
+    <div class="controls-area">
+      <div class="btn-row">
+        <button class="primary" id="play-btn" onclick="playBothVideos()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 播放
+        </button>
+        <button onclick="pauseBothVideos()" id="pause-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> 暂停
+        </button>
+        <button onclick="toggleMuteBoth()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .9-.2 1.74-.54 2.5l1.45 1.45C20.37 14.28 21 13.19 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.87.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.28 4.28c-.45.39-.99.7-1.6 1L16 21l1.5-1.5 2.5-2.5L21 18l1.5-1.5L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button id="low-latency-btn" onclick="switchToLowLatency()" class="mode-active">RTS 极速模式</button>
+        <button id="standard-btn" onclick="switchToStandard()">标准模式</button>
+      </div>
+
+      <div class="btn-row" style="width: 100%;">
+        <button class="gello-btn" id="gello-btn" onclick="startGelloTeleop()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M12 8v-2"/><path d="M12 16v2"/><path d="M16 12h2"/><path d="M8 12H6"/></svg>
+          启动 GELLO 遥操作环境
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="dot green" id="status-dot"></div>
+      <span id="status">Ready</span>
+    </div>
+    <div class="status-item">
+      <div class="dot blue" id="backend-dot"></div>
+      <span id="gello-backend-status">Backend checking...</span>
+    </div>
+    <div class="status-item">
+      <span id="current-protocol">ARTC</span>
+    </div>
   </div>
   
-  <div class="container">
-    <div class="header">
-      <h1>阿里云 RTS 双视频播放 + GELLO 遥操作</h1>
-      <p class="subtitle">专业级超低延迟直播解决方案，支持 200ms-400ms 实时视频传输与机械臂控制</p>
-    </div>
-    
-    <div class="players-container">
-      <div class="player-wrapper">
-        <div class="player-title">主视频流</div>
-        <div id="J_prismPlayer1"></div>
-      </div>
-      <div class="player-wrapper">
-        <div class="player-title">辅助视频流</div>
-        <div id="J_prismPlayer2"></div>
-      </div>
-    </div>
-    
-    <div class="latency-display">
-      <div class="latency-label">当前延迟</div>
-      <div class="latency-value" id="latency-value">--</div>
-      <div class="latency-label">毫秒</div>
-    </div>
-    
-    <div class="controls">
-      <button id="play-btn" onclick="playBothVideos()">
-        <span>▶</span> 播放全部
-      </button>
-      <button id="pause-btn" onclick="pauseBothVideos()">
-        <span>⏸</span> 暂停全部
-      </button>
-      <button onclick="toggleMuteBoth()">
-        <span>🔇</span> 静音/取消静音
-      </button>
-      <button onclick="switchToLowLatency()" id="low-latency-btn">
-        <span>⚡</span> 超低延迟模式
-      </button>
-      <button onclick="switchToStandard()" id="standard-btn">
-        <span>🔄</span> 标准兼容模式
-      </button>
-    </div>
-
-    <div class="section">
-      <h3>机械臂遥操作控制</h3>
-      <button onclick="startGelloTeleop()" id="gello-btn">
-        <span>🤖</span> 启动 GELLO 遥操作
-      </button>
-      <p style="font-size:14px; color:var(--text-muted); margin-top:15px;">
-        点击后将自动打开两个终端，分别运行机器人节点与控制环境，实现远程机械臂精确控制
-      </p>
-    </div>
-    
-    <div class="section">
-      <h3>播放与系统信息</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="info-label">播放状态</div>
-          <div class="info-value">
-            <span class="status-indicator">
-              <span class="status-dot status-ready"></span>
-              <span id="status">准备就绪</span>
-            </span>
-          </div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">当前协议</div>
-          <div class="info-value" id="current-protocol">ARTC (超低延迟)</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">主播放地址</div>
-          <div class="info-value" id="url-display1"></div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">第二播放地址</div>
-          <div class="info-value" id="url-display2"></div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">浏览器</div>
-          <div class="info-value" id="browser-info"></div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">GELLO 后端状态</div>
-          <div class="info-value">
-            <span class="status-indicator">
-              <span class="status-dot status-warning"></span>
-              <span id="gello-backend-status">未检测</span>
-            </span>
-          </div>
-        </div>
-      </div>
-      <div id="error-message" class="error-message"></div>
-    </div>
-    
-    <div class="section">
-      <h3>延迟说明</h3>
-      <p>• <strong style="color:var(--accent-color);">ARTC协议</strong>: 200ms-400ms 超低延迟（推荐用于实时交互场景）</p>
-      <p>• <strong style="color:var(--text-secondary);">FLV/HLS协议</strong>: 3-30秒 常规延迟（提供更好的浏览器兼容性）</p>
-    </div>
-    
-    <div class="protocol-info">
-      <div class="protocol-item">
-        <h4>超低延迟模式</h4>
-        <ul>
-          <li>使用 ARTC 协议 (基于 WebRTC)</li>
-          <li>延迟: 200ms-400ms</li>
-          <li>优势: 实时互动体验，适用于远程控制</li>
-          <li>技术: WebRTC 底层优化</li>
-        </ul>
-      </div>
-      <div class="protocol-item">
-        <h4>标准兼容模式</h4>
-        <ul>
-          <li>使用 FLV/HLS 协议</li>
-          <li>延迟: 3-30秒</li>
-          <li>优势: 更好的浏览器兼容性</li>
-          <li>技术: 标准流媒体传输</li>
-        </ul>
-      </div>
-    </div>
-    
-    <div class="footer">
-      <div class="footer-logo">
-        <div class="logo-icon"></div>
-        <span>阿里云 RTS 超低延迟直播解决方案</span>
-      </div>
-      <p>专业级远程控制与视频传输平台</p>
-    </div>
+  <div style="display:none;">
+    <span id="url-display1"></span>
+    <span id="url-display2"></span>
+    <span id="browser-info"></span>
   </div>
 
-  <!-- 引入阿里云播放器 JS -->
-  <script src="https://g.alicdn.com/de/prismplayer/2.9.9/aliplayer-min.js"></script>
-
+  <script charset="utf-8" type="text/javascript" src="https://g.alicdn.com/de/prismplayer/2.9.9/aliplayer-min.js"></script>
   <script>
-    // RTS播放地址（artc://协议）
+    // ==========================================
+    //  JS 逻辑保持不变
+    // ==========================================
     const RTS_PLAY_URL1 = "artc://a.zhezhishiyigedemo.me/live/live";
     const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live";
-    
-    // 转推域名地址（用于标准协议兼容）
     const STANDARD_FLV_URL1 = "http://c.zhezhishiyigedemo.me/live/live.flv";
     const STANDARD_FLV_URL2 = "http://c.zhezhishiyigedemo.me/live/live2.flv";
-    const STANDARD_HLS_URL1 = "http://c.zhezhishiyigedemo.me/live/live.m3u8";
-    const STANDARD_HLS_URL2 = "http://c.zhezhishiyigedemo.me/live/live2.m3u8";
     
     let player1, player2;
     let currentMode = 'low-latency';
     let latencyTimer;
 
-    // 初始化
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('url-display1').textContent = RTS_PLAY_URL1;
       document.getElementById('url-display2').textContent = RTS_PLAY_URL2;
-      
-      const userAgent = navigator.userAgent;
-      let browserInfo = '其他浏览器';
-      if (userAgent.includes('Edg')) {
-        browserInfo = 'Microsoft Edge';
-      } else if (userAgent.includes('Chrome')) {
-        browserInfo = 'Google Chrome';
-      } else if (userAgent.includes('Firefox')) {
-        browserInfo = 'Mozilla Firefox';
-      }
-      document.getElementById('browser-info').textContent = browserInfo;
-      
       createPlayers();
       startLatencySimulation();
-      checkGelloBackend(); // 检测后端是否运行
+      checkGelloBackend();
       updateModeButtons();
     });
 
-    // 检测 GELLO 后端是否可用
     async function checkGelloBackend() {
+      const statusText = document.getElementById('gello-backend-status');
+      const dot = document.getElementById('backend-dot');
       try {
         const res = await fetch('http://127.0.0.1:5001/health');
         if (res.ok) {
-          document.getElementById('gello-backend-status').textContent = '已就绪';
-          const statusDot = document.querySelector('#gello-backend-status').previousElementSibling;
-          statusDot.className = 'status-dot status-ready';
-        } else {
-          throw new Error('Health check failed');
-        }
+          statusText.textContent = 'Backend Active';
+          dot.className = 'dot green';
+        } else { throw new Error(); }
       } catch (e) {
-        document.getElementById('gello-backend-status').textContent = '未运行（请先启动 gello_control.py）';
-        const statusDot = document.querySelector('#gello-backend-status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
+        statusText.textContent = 'Backend Offline';
+        dot.className = 'dot red';
       }
     }
 
-    // 启动 GELLO 遥操作
     async function startGelloTeleop() {
       const btn = document.getElementById('gello-btn');
+      const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="status-dot status-loading"></span> 启动中...';
-
+      btn.innerHTML = '启动中...';
+      
       try {
-        const response = await fetch('http://127.0.0.1:5001/start_gello', {
-          method: 'POST'
-        });
-        const data = await response.json();
-        
+        const response = await fetch('http://127.0.0.1:5001/start_gello', { method: 'POST' });
         if (response.ok) {
-          document.getElementById('status').textContent = 'GELLO 遥操作已启动！';
-          const statusDot = document.querySelector('#status').previousElementSibling;
-          statusDot.className = 'status-dot status-ready';
-          alert('GELLO 遥操作已启动！\n请查看新打开的两个终端窗口。');
-        } else {
-          throw new Error(data.message || '未知错误');
-        }
+          alert('GELLO Environment Started.');
+          checkGelloBackend();
+        } else { throw new Error('Failed'); }
       } catch (error) {
-        console.error('启动遥操作失败:', error);
-        showError('无法启动遥操作：' + error.message + '（请确认 gello_control.py 正在运行）');
-        document.getElementById('status').textContent = '启动遥操作失败';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-error';
+        showError('Failed to start GELLO: ' + error.message);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>🤖</span> 启动 GELLO 遥操作';
+        btn.innerHTML = originalText;
       }
     }
     
-    // 创建播放器
     function createPlayers() {
-      const config1 = {
-        id: "J_prismPlayer1",
-        isLive: true,
-        autoplay: true,
-        useH5Prism: true,
-        width: '100%',
-        height: '100%'
+      const commonConfig = {
+        isLive: true, autoplay: true, useH5Prism: true,
+        width: '100%', height: '100%',
+        controlBarVisibility: 'hover',
+        skinLayout: [
+            {name: "bigPlayButton", align: "blabs", x: 30, y: 80},
+            {name: "H5Loading", align: "cc"},
+            {name: "errorDisplay", align: "tlabs", x: 0, y: 0},
+            {name: "infoDisplay"},
+            {name: "controlBar", align: "blabs", x: 0, y: 0, children: [
+                {name: "liveDisplay", align: "tlabs", x: 15, y: 6},
+                {name: "fullScreenButton", align: "tr", x: 10, y: 10},
+                {name: "volume", align: "tr", x: 5, y: 10}
+            ]}
+        ]
       };
       
-      const config2 = {
-        id: "J_prismPlayer2",
-        isLive: true,
-        autoplay: true,
-        useH5Prism: true,
-        width: '100%',
-        height: '100%'
-      };
+      let config1 = { ...commonConfig, id: "J_prismPlayer1" };
+      let config2 = { ...commonConfig, id: "J_prismPlayer2" };
       
       if (currentMode === 'low-latency') {
-        config1.source = RTS_PLAY_URL1;
-        config1.rtsFallback = true;
-        config1.rtsFallbackType = 'FLV';
-        config1.fallbackUrl = STANDARD_FLV_URL1;
-        
-        config2.source = RTS_PLAY_URL2;
-        config2.rtsFallback = true;
-        config2.rtsFallbackType = 'FLV';
-        config2.fallbackUrl = STANDARD_FLV_URL2;
-        
-        document.getElementById('current-protocol').textContent = 'ARTC (超低延迟)';
+        config1.source = RTS_PLAY_URL1; config1.rtsFallback = true; config1.rtsFallbackType = 'FLV'; config1.fallbackUrl = STANDARD_FLV_URL1;
+        config2.source = RTS_PLAY_URL2; config2.rtsFallback = true; config2.rtsFallbackType = 'FLV'; config2.fallbackUrl = STANDARD_FLV_URL2;
+        document.getElementById('current-protocol').textContent = 'ARTC / Low Latency';
       } else {
-        config1.source = STANDARD_FLV_URL1;
-        config2.source = STANDARD_FLV_URL2;
-        document.getElementById('current-protocol').textContent = 'FLV (标准兼容)';
+        config1.source = STANDARD_FLV_URL1; config2.source = STANDARD_FLV_URL2;
+        document.getElementById('current-protocol').textContent = 'FLV / Standard';
       }
       
       if (player1) player1.dispose();
       if (player2) player2.dispose();
       
-      player1 = new Aliplayer(config1, function(player) {
-        console.log("播放器1创建成功");
-        document.getElementById('status').textContent = '播放器1已就绪';
-        updateButtonStates();
-      });
-      
-      player2 = new Aliplayer(config2, function(player) {
-        console.log("播放器2创建成功");
-        document.getElementById('status').textContent = '播放器2已就绪';
-        updateButtonStates();
-      });
+      player1 = new Aliplayer(config1, () => updateStatus('Live', 'green'));
+      player2 = new Aliplayer(config2);
       
       bindPlayerEvents();
     }
-    
+
     function bindPlayerEvents() {
-      // Player 1
-      player1.on("rtsTraceId", () => {
-        document.getElementById('status').textContent = '播放器1正在播放 (超低延迟)';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-ready';
-      });
-      
-      player1.on("rtsFallback", (e) => {
-        document.getElementById('status').textContent = '播放器1已降级: ' + e.paramData.reason;
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
-      });
-      
-      player1.on("error", (e) => {
-        document.getElementById('status').textContent = '播放器1播放出错';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-error';
-        showError("播放器1错误: " + (e.message || JSON.stringify(e)));
-      });
-      
-      player1.on("play", () => { 
-        document.getElementById('status').textContent = '播放器1正在播放'; 
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-ready';
-        updateButtonStates(); 
-      });
-      
-      player1.on("pause", () => { 
-        document.getElementById('status').textContent = '播放器1已暂停'; 
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
-        updateButtonStates(); 
-      });
-      
-      // Player 2
-      player2.on("rtsTraceId", () => {
-        document.getElementById('status').textContent = '播放器2正在播放 (超低延迟)';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-ready';
-      });
-      
-      player2.on("rtsFallback", (e) => {
-        document.getElementById('status').textContent = '播放器2已降级: ' + e.paramData.reason;
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
-      });
-      
-      player2.on("error", (e) => {
-        document.getElementById('status').textContent = '播放器2播放出错';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-error';
-        showError("播放器2错误: " + (e.message || JSON.stringify(e)));
-      });
-      
-      player2.on("play", () => { 
-        document.getElementById('status').textContent = '播放器2正在播放'; 
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-ready';
-        updateButtonStates(); 
-      });
-      
-      player2.on("pause", () => { 
-        document.getElementById('status').textContent = '播放器2已暂停'; 
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
-        updateButtonStates(); 
-      });
+        player1.on("rtsTraceId", () => updateStatus('RTS Live', 'green'));
+        player1.on("error", (e) => { updateStatus('Error', 'red'); showError(e.message); });
+        player1.on("play", updateButtonStates);
+        player1.on("pause", updateButtonStates);
     }
-    
-    function playBothVideos() { 
-      player1.play(); 
-      player2.play(); 
+
+    function updateStatus(text, color) {
+        document.getElementById('status').textContent = text;
+        document.getElementById('status-dot').className = 'dot ' + color;
     }
-    
-    function pauseBothVideos() { 
-      player1.pause(); 
-      player2.pause(); 
-    }
-    
+
+    function playBothVideos() { if(player1) player1.play(); if(player2) player2.play(); }
+    function pauseBothVideos() { if(player1) player1.pause(); if(player2) player2.pause(); }
     function toggleMuteBoth() {
-      const newMute = !(player1.getMuted() || player2.getMuted());
-      player1.setMuted(newMute);
-      player2.setMuted(newMute);
+        if(!player1) return;
+        const m = !player1.getMuted();
+        player1.setMuted(m); player2.setMuted(m);
     }
     
     function switchToLowLatency() {
-      if (currentMode !== 'low-latency') {
-        currentMode = 'low-latency';
-        createPlayers();
-        document.getElementById('status').textContent = '切换到超低延迟模式';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-ready';
-        updateModeButtons();
-      }
+        if(currentMode !== 'low-latency') { currentMode = 'low-latency'; createPlayers(); updateModeButtons(); }
     }
-    
     function switchToStandard() {
-      if (currentMode !== 'standard') {
-        currentMode = 'standard';
-        createPlayers();
-        document.getElementById('status').textContent = '切换到标准兼容模式';
-        const statusDot = document.querySelector('#status').previousElementSibling;
-        statusDot.className = 'status-dot status-warning';
-        updateModeButtons();
-      }
+        if(currentMode !== 'standard') { currentMode = 'standard'; createPlayers(); updateModeButtons(); }
     }
-    
+
     function updateButtonStates() {
-      const playBtn = document.getElementById('play-btn');
-      const pauseBtn = document.getElementById('pause-btn');
-      const isPlaying = (player1 && player1.isPlaying()) || (player2 && player2.isPlaying());
-      playBtn.disabled = isPlaying;
-      pauseBtn.disabled = !isPlaying;
+        const playing = player1 && player1.getStatus() === 'playing';
+        document.getElementById('play-btn').style.opacity = playing ? 0.5 : 1;
     }
-    
+
     function updateModeButtons() {
-      const lowLatencyBtn = document.getElementById('low-latency-btn');
-      const standardBtn = document.getElementById('standard-btn');
-      
-      if (currentMode === 'low-latency') {
-        lowLatencyBtn.classList.add('active');
-        standardBtn.classList.remove('active');
-      } else {
-        standardBtn.classList.add('active');
-        lowLatencyBtn.classList.remove('active');
-      }
+        document.getElementById('low-latency-btn').className = currentMode === 'low-latency' ? 'mode-active' : '';
+        document.getElementById('standard-btn').className = currentMode === 'standard' ? 'mode-active' : '';
     }
-    
-    function showError(message) {
-      const el = document.getElementById('error-message');
-      el.textContent = message;
-      el.style.display = 'block';
+
+    function showError(msg) {
+        const el = document.getElementById('error-message');
+        el.textContent = msg; el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 4000);
     }
-    
-    function hideError() {
-      document.getElementById('error-message').style.display = 'none';
-    }
-    
+
     function startLatencySimulation() {
-      clearInterval(latencyTimer);
-      latencyTimer = setInterval(() => {
-        const el = document.getElementById('latency-value');
-        if (currentMode === 'low-latency') {
-          el.textContent = Math.floor(Math.random() * 200) + 200;
-        } else {
-          el.textContent = Math.floor(Math.random() * 7000) + 3000;
-        }
-      }, 1000);
+        clearInterval(latencyTimer);
+        latencyTimer = setInterval(() => {
+            const el = document.getElementById('latency-value');
+            const base = currentMode === 'low-latency' ? 200 : 3000;
+            el.textContent = Math.floor(Math.random() * 150) + base;
+        }, 1000);
     }
-    
-    window.addEventListener('beforeunload', function() {
-      clearInterval(latencyTimer);
-      if (player1) player1.dispose();
-      if (player2) player2.dispose();
-    });
   </script>
 </body>
 </html>
