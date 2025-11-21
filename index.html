@@ -1,30 +1,24 @@
-<!DOCTYPE html>
+
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>阿里云 RTS 双视频播放 + GELLO 遥操作</title>
+  <title>阿里云 RTS & GELLO 远程控制台</title>
   <link rel="stylesheet" href="https://g.alicdn.com/de/prismplayer/2.9.9/skins/default/aliplayer-min.css" />
   
   <style>
     :root {
-      /* Apple 风格色板 */
-      --bg-page: #F5F5F7;          /* 经典的 Apple 浅灰背景 */
-      --text-primary: #1D1D1F;     /* 近乎黑的深灰 */
-      --text-secondary: #86868B;   /* 标志性的次要文字灰 */
-      --accent-blue: #0071E3;      /* Apple 官网蓝 */
-      --glass-bg: rgba(255, 255, 255, 0.65); /* 磨砂玻璃背景 */
+      --bg-page: #F5F5F7;
+      --text-primary: #1D1D1F;
+      --text-secondary: #86868B;
+      --accent-blue: #0071E3;
+      --glass-bg: rgba(255, 255, 255, 0.65);
       --glass-border: rgba(255, 255, 255, 0.4);
-      --video-radius: 24px;        /* 大圆角 */
-      --panel-radius: 20px;
+      --video-radius: 20px;
+      --panel-radius: 24px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-font-smoothing: antialiased; /* 让字体在 Mac 上更清晰 */
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
 
     body {
       font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -37,37 +31,19 @@
       padding: 40px 20px;
     }
 
-    /* 标题区域 - 极简大字 */
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      max-width: 800px;
-      animation: fadeIn 0.8s ease-out;
-    }
+    .header { text-align: center; margin-bottom: 30px; max-width: 800px; animation: fadeIn 0.8s ease-out; }
+    .header h1 { font-size: 40px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 10px; color: var(--text-primary); }
+    .header p { font-size: 17px; color: var(--text-secondary); }
 
-    .header h1 {
-      font-size: 40px;
-      font-weight: 600;
-      letter-spacing: -0.015em;
-      margin-bottom: 12px;
-      color: var(--text-primary);
-    }
-
-    .header p {
-      font-size: 17px;
-      color: var(--text-secondary);
-      font-weight: 400;
-      line-height: 1.47059;
-    }
-
-    /* 视频区域 - 去除底板，直接悬浮 */
+    /* --- 布局修改：三列布局 --- */
     .video-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-      gap: 30px;
+      grid-template-columns: 1fr 1.6fr 1fr; 
+      gap: 24px;
       width: 100%;
-      max-width: 1600px; /* 宽屏沉浸 */
-      margin-bottom: 40px;
+      max-width: 1800px;
+      margin-bottom: 30px;
+      align-items: center;
     }
 
     .video-wrapper {
@@ -77,213 +53,108 @@
       background: #000;
       border-radius: var(--video-radius);
       overflow: hidden;
-      /* 只有视频本身有阴影，没有外框 */
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); 
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08); 
+      transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .video-wrapper.main-stage {
+      z-index: 2;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      transform: scale(1.02);
     }
 
     .video-wrapper:hover {
-      transform: scale(1.01); /* 及其微小的放大 */
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+      transform: scale(1.03);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
     }
 
-    /* 标签 - 悬浮在视频左上角 */
     .video-label {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 16px; left: 16px;
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-primary);
-      z-index: 10;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding: 4px 12px; border-radius: 16px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-primary); z-index: 10;
       pointer-events: none;
     }
-
-    #J_prismPlayer1, #J_prismPlayer2 {
-      position: absolute !important;
-      top: 0;
-      left: 0;
-      width: 100% !important;
-      height: 100% !important;
+    
+    /* 设置面板样式 */
+    .settings-panel { 
+      width: 100%; max-width: 1000px; margin-bottom: 30px; padding: 24px; 
+      background: #fff; border-radius: 20px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+      display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .input-group { display: flex; flex-direction: column; flex: 1; min-width: 250px; }
+    .input-group label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; letter-spacing: 0.5px; }
+    .input-group input { 
+      padding: 12px 16px; border: 1px solid #E5E5EA; border-radius: 12px; 
+      font-size: 15px; outline: none; transition: all 0.2s; background: #F2F2F7;
+      color: var(--text-primary);
+    }
+    .input-group input:focus { border-color: var(--accent-blue); background: #fff; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+    
+    /* 播放器定位 */
+    #J_prismPlayer_Center, #J_prismPlayer_Left, #J_prismPlayer_Right {
+      position: absolute !important; top: 0; left: 0; width: 100% !important; height: 100% !important;
     }
 
-    /* 控制台 - 悬浮岛/磨砂玻璃风格 */
+    /* 控制台 */
     .control-island {
-      width: 100%;
-      max-width: 1000px;
+      width: 100%; max-width: 1000px;
       background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--glass-border);
       border-radius: var(--panel-radius);
       padding: 30px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
       display: grid;
-      grid-template-columns: 200px 1fr; /* 左侧数据，右侧控制 */
+      grid-template-columns: 200px 1fr;
       gap: 40px;
       align-items: center;
     }
 
-    /* 左侧延迟数据 */
-    .latency-display {
-      text-align: left;
-      padding-right: 30px;
-      border-right: 1px solid rgba(0,0,0,0.05);
-    }
+    .latency-display { text-align: left; padding-right: 30px; border-right: 1px solid rgba(0,0,0,0.05); }
+    .latency-value { font-size: 56px; font-weight: 600; color: var(--text-primary); letter-spacing: -2px; line-height: 1; }
+    .latency-unit { font-size: 18px; font-weight: 500; color: var(--text-secondary); margin-left: 5px; }
+    .latency-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-top: 8px; letter-spacing: 0.5px; }
 
-    .latency-value {
-      font-size: 56px;
-      font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: -2px;
-      line-height: 1;
-    }
+    .controls-area { display: flex; flex-direction: column; gap: 20px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
 
-    .latency-unit {
-      font-size: 18px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-left: 5px;
-    }
-
-    .latency-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      margin-top: 8px;
-      letter-spacing: 0.5px;
-    }
-
-    /* 右侧按钮群 */
-    .controls-area {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* Apple 风格按钮 */
     button {
-      border: none;
-      background: rgba(0,0,0,0.05); /* 浅灰背景 */
-      color: var(--text-primary);
-      padding: 14px 24px;
-      border-radius: 980px; /* 胶囊形 */
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      border: none; background: rgba(0,0,0,0.05); color: var(--text-primary);
+      padding: 14px 24px; border-radius: 980px; font-size: 15px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; justify-content: center;
     }
-
-    button:hover {
-      background: rgba(0,0,0,0.1);
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    /* 主按钮 - 蓝色 */
-    button.primary {
-      background: var(--accent-blue);
-      color: white;
-    }
-
-    button.primary:hover {
-      background: #0077ED;
-      box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3);
-    }
+    button:hover { background: rgba(0,0,0,0.1); }
+    button:active { transform: scale(0.98); }
+    button.primary { background: var(--accent-blue); color: white; }
+    button.primary:hover { background: #0077ED; box-shadow: 0 4px 15px rgba(0, 113, 227, 0.3); }
+    button.mode-active { background: var(--text-primary); color: white; }
     
-    /* 模式切换按钮状态 */
-    button.mode-active {
-      background: var(--text-primary);
-      color: white;
-    }
+    .gello-btn { width: 100%; justify-content: center; background: linear-gradient(90deg, #FF2D55, #FF375F); color: white; font-weight: 600; }
+    .gello-btn:hover { background: linear-gradient(90deg, #FF375F, #FF2D55); box-shadow: 0 4px 15px rgba(255, 45, 85, 0.3); }
 
-    /* GELLO 特殊按钮 */
-    .gello-btn {
-      width: 100%;
-      justify-content: center;
-      background: linear-gradient(90deg, #FF2D55, #FF375F);
-      color: white;
-      font-weight: 600;
-    }
-    .gello-btn:hover {
-      background: linear-gradient(90deg, #FF375F, #FF2D55);
-      box-shadow: 0 4px 15px rgba(255, 45, 85, 0.3);
-    }
-
-    /* 底部信息条 - 极简 */
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 1000px;
-      margin-top: 20px;
-      padding: 0 20px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .status-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #ccc;
-    }
+    .status-bar { display: flex; justify-content: space-between; width: 100%; max-width: 1000px; margin-top: 20px; padding: 0 20px; font-size: 13px; color: var(--text-secondary); }
+    .status-item { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
     .dot.green { background: #34C759; box-shadow: 0 0 8px rgba(52, 199, 89, 0.4); }
-    .dot.yellow { background: #FF9500; }
     .dot.red { background: #FF3B30; }
     .dot.blue { background: var(--accent-blue); animation: pulse 2s infinite; }
 
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* 错误提示 */
-    #error-message {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      padding: 12px 24px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      color: #FF3B30;
-      font-weight: 500;
-      z-index: 100;
-      display: none;
-    }
+    #error-message { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); color: #FF3B30; font-weight: 500; z-index: 100; display: none; }
 
-    /* 响应式 */
-    @media (max-width: 1024px) {
-      .video-grid { grid-template-columns: 1fr; }
+    @media (max-width: 1200px) {
+      .video-grid { grid-template-columns: 1fr; max-width: 800px; }
+      .video-wrapper.main-stage { order: -1; }
       .control-island { grid-template-columns: 1fr; gap: 20px; text-align: center; }
       .latency-display { padding-right: 0; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 20px; }
-      .btn-row { justify-content: center; }
-      .latency-value { font-size: 42px; }
     }
   </style>
 </head>
@@ -292,39 +163,66 @@
   <div id="error-message"></div>
 
   <div class="header">
-    <h1>RTS Teleoperation</h1>
-    <p>超低延迟视觉反馈系统</p>
+    <h1>RTS 3-View Teleoperation</h1>
+    <p>多视角超低延迟遥操作终端</p>
   </div>
 
+  <!-- 1. 连接设置面板 (预填了你的 Ngrok 地址) -->
+  <div class="settings-panel">
+    <div class="input-group">
+      <label>后端 API 地址 (Ngrok URL)</label>
+      <!-- 在这里预填了你的地址 -->
+      <input type="text" id="api-url" placeholder="https://xxxx.ngrok-free.app" value="https://vicente-unspottable-galina.ngrok-free.dev">
+    </div>
+    <div class="input-group" style="max-width: 200px;">
+      <label>访问密码 (Token)</label>
+      <input type="password" id="api-token" placeholder="Token" value="gello123">
+    </div>
+    <button onclick="connectBackend()" class="primary" style="height: 46px; margin-bottom: 1px;">
+      <span id="connect-text">连接服务器</span>
+    </button>
+  </div>
+
+  <!-- 2. 视频区域 -->
   <div class="video-grid">
+    <!-- 左侧 (C) -->
     <div class="video-wrapper">
-      <div class="video-label">Camera 01</div>
-      <div id="J_prismPlayer1"></div>
+      <div class="video-label">Left View (C)</div>
+      <div id="J_prismPlayer_Left"></div>
     </div>
+
+    <!-- 中间 (A - Main) -->
+    <div class="video-wrapper main-stage">
+      <div class="video-label">Main View (A)</div>
+      <div id="J_prismPlayer_Center"></div>
+    </div>
+
+    <!-- 右侧 (E) -->
     <div class="video-wrapper">
-      <div class="video-label">Camera 02</div>
-      <div id="J_prismPlayer2"></div>
+      <div class="video-label">Right View (E)</div>
+      <div id="J_prismPlayer_Right"></div>
     </div>
   </div>
 
+  <!-- 3. 控制岛 -->
   <div class="control-island">
     <div class="latency-display">
       <div>
         <span class="latency-value" id="latency-value">--</span>
         <span class="latency-unit">ms</span>
       </div>
-      <div class="latency-label">Real-time Latency</div>
+      <div class="latency-label">Avg. Latency</div>
     </div>
 
     <div class="controls-area">
       <div class="btn-row">
-        <button class="primary" id="play-btn" onclick="playBothVideos()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 播放
+        <button class="primary" id="play-btn" onclick="playAllVideos()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 播放全部
         </button>
-        <button onclick="pauseBothVideos()" id="pause-btn">
+        <button onclick="pauseAllVideos()" id="pause-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> 暂停
         </button>
-        <button onclick="toggleMuteBoth()">
+        <button onclick="toggleMuteAll()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .9-.2 1.74-.54 2.5l1.45 1.45C20.37 14.28 21 13.19 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.87.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.28 4.28c-.45.39-.99.7-1.6 1L16 21l1.5-1.5 2.5-2.5L21 18l1.5-1.5L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
         </button>
       </div>
@@ -337,7 +235,7 @@
       <div class="btn-row" style="width: 100%;">
         <button class="gello-btn" id="gello-btn" onclick="startGelloTeleop()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M12 8v-2"/><path d="M12 16v2"/><path d="M16 12h2"/><path d="M8 12H6"/></svg>
-          启动 GELLO 遥操作环境
+          启动 GELLO 远程遥操作
         </button>
       </div>
     </div>
@@ -346,86 +244,138 @@
   <div class="status-bar">
     <div class="status-item">
       <div class="dot green" id="status-dot"></div>
-      <span id="status">Ready</span>
+      <span id="status">Systems Ready</span>
     </div>
     <div class="status-item">
       <div class="dot blue" id="backend-dot"></div>
       <span id="gello-backend-status">Backend checking...</span>
     </div>
     <div class="status-item">
-      <span id="current-protocol">ARTC</span>
+      <span id="current-protocol">ARTC / 3-Stream</span>
     </div>
-  </div>
-  
-  <div style="display:none;">
-    <span id="url-display1"></span>
-    <span id="url-display2"></span>
-    <span id="browser-info"></span>
   </div>
 
   <script charset="utf-8" type="text/javascript" src="https://g.alicdn.com/de/prismplayer/2.9.9/aliplayer-min.js"></script>
   <script>
     // ==========================================
-    //  JS 逻辑保持不变
+    //  URL 配置
     // ==========================================
-    const RTS_PLAY_URL1 = "artc://e.zhezhishiyigedemo.me/live/live";
-    const RTS_PLAY_URL2 = "artc://c.zhezhishiyigedemo.me/live/live";
-    const STANDARD_FLV_URL1 = "http://c.zhezhishiyigedemo.me/live/live.flv";
-    const STANDARD_FLV_URL2 = "http://c.zhezhishiyigedemo.me/live/live2.flv";
+    const URL_CENTER_RTS = "artc://a.zhezhishiyigedemo.me/live/live";
+    const URL_LEFT_RTS   = "artc://c.zhezhishiyigedemo.me/live/live";
+    const URL_RIGHT_RTS  = "artc://e.zhezhishiyigedemo.me/live/live";
+
+    const URL_CENTER_FLV = "http://a.zhezhishiyigedemo.me/live/live.flv";
+    const URL_LEFT_FLV   = "http://c.zhezhishiyigedemo.me/live/live.flv";
+    const URL_RIGHT_FLV  = "http://e.zhezhishiyigedemo.me/live/live.flv";
     
-    let player1, player2;
+    let playerCenter, playerLeft, playerRight;
     let currentMode = 'low-latency';
     let latencyTimer;
+    let apiBaseUrl = "";
+    let apiToken = "";
 
     document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('url-display1').textContent = RTS_PLAY_URL1;
-      document.getElementById('url-display2').textContent = RTS_PLAY_URL2;
       createPlayers();
       startLatencySimulation();
-      checkGelloBackend();
       updateModeButtons();
+      
+      // 自动尝试连接预填的后端
+      connectBackend(true);
     });
 
-    async function checkGelloBackend() {
+    // ---------------------------------------
+    // 1. 后端连接逻辑
+    // ---------------------------------------
+    async function connectBackend(isAuto = false) {
+      const urlInput = document.getElementById('api-url').value.trim();
+      const tokenInput = document.getElementById('api-token').value.trim();
       const statusText = document.getElementById('gello-backend-status');
       const dot = document.getElementById('backend-dot');
+      const btnText = document.getElementById('connect-text');
+      
+      if(!urlInput) { 
+        if(!isAuto) alert("请输入后端地址"); 
+        return; 
+      }
+      
+      // 去掉末尾斜杠
+      apiBaseUrl = urlInput.replace(/\/$/, "");
+      apiToken = tokenInput;
+      
+      if(!isAuto) btnText.textContent = "连接中...";
+      statusText.textContent = 'Connecting...';
+      
       try {
-        const res = await fetch('http://127.0.0.1:5001/health');
+        // 调用健康检查接口
+        const res = await fetch(`${apiBaseUrl}/health`);
+        const data = await res.json();
+        
         if (res.ok) {
-          statusText.textContent = 'Backend Active';
+          statusText.textContent = 'Connected (SSH Ready)';
           dot.className = 'dot green';
-        } else { throw new Error(); }
+          btnText.textContent = "已连接";
+          if(!isAuto) alert("成功连接到 GELLO 后端！");
+        } else {
+          throw new Error("状态异常");
+        }
       } catch (e) {
-        statusText.textContent = 'Backend Offline';
+        statusText.textContent = 'Connection Failed';
         dot.className = 'dot red';
+        btnText.textContent = "连接失败";
+        console.error("连接错误:", e);
+        if(!isAuto) alert("连接失败，请检查：\n1. Ngrok 地址是否正确\n2. 本地 server.py 是否正在运行");
       }
     }
 
+    // ---------------------------------------
+    // 2. 启动 GELLO 遥操作 (核心功能)
+    // ---------------------------------------
     async function startGelloTeleop() {
+      if (!apiBaseUrl) {
+        alert("请先点击上方的【连接服务器】按钮");
+        return;
+      }
+
       const btn = document.getElementById('gello-btn');
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '启动中...';
+      btn.innerHTML = '正在发送指令...';
       
       try {
-        const response = await fetch('http://127.0.0.1:5001/start_gello', { method: 'POST' });
+        const response = await fetch(`${apiBaseUrl}/start_gello`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}` // 带上密码
+            }
+        });
+        
+        const data = await response.json();
+        
         if (response.ok) {
-          alert('GELLO Environment Started.');
-          checkGelloBackend();
-        } else { throw new Error('Failed'); }
+          alert('✅ 指令已发送！\n\n正在远程 Ubuntu 机器上通过 SSH 启动 GELLO。\n请留意机器人动作。');
+        } else {
+          if(response.status === 401) {
+              alert('❌ 认证失败：密码错误');
+          } else {
+              throw new Error(data.message || '未知错误');
+          }
+        }
       } catch (error) {
-        showError('Failed to start GELLO: ' + error.message);
+        showError('通信失败: ' + error.message);
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
     }
     
+    // ---------------------------------------
+    // 3. 播放器相关 (保持不变)
+    // ---------------------------------------
     function createPlayers() {
       const commonConfig = {
         isLive: true, autoplay: true, useH5Prism: true,
-        width: '100%', height: '100%',
-        controlBarVisibility: 'hover',
+        width: '100%', height: '100%', controlBarVisibility: 'hover',
         skinLayout: [
             {name: "bigPlayButton", align: "blabs", x: 30, y: 80},
             {name: "H5Loading", align: "cc"},
@@ -439,32 +389,41 @@
         ]
       };
       
-      let config1 = { ...commonConfig, id: "J_prismPlayer1" };
-      let config2 = { ...commonConfig, id: "J_prismPlayer2" };
+      let configCenter = { ...commonConfig, id: "J_prismPlayer_Center" };
+      let configLeft   = { ...commonConfig, id: "J_prismPlayer_Left" };
+      let configRight  = { ...commonConfig, id: "J_prismPlayer_Right" };
       
       if (currentMode === 'low-latency') {
-        config1.source = RTS_PLAY_URL1; config1.rtsFallback = true; config1.rtsFallbackType = 'FLV'; config1.fallbackUrl = STANDARD_FLV_URL1;
-        config2.source = RTS_PLAY_URL2; config2.rtsFallback = true; config2.rtsFallbackType = 'FLV'; config2.fallbackUrl = STANDARD_FLV_URL2;
+        configCenter.source = URL_CENTER_RTS; 
+        configCenter.rtsFallback = true; configCenter.rtsFallbackType = 'FLV'; configCenter.fallbackUrl = URL_CENTER_FLV;
+        configLeft.source = URL_LEFT_RTS; 
+        configLeft.rtsFallback = true; configLeft.rtsFallbackType = 'FLV'; configLeft.fallbackUrl = URL_LEFT_FLV;
+        configRight.source = URL_RIGHT_RTS; 
+        configRight.rtsFallback = true; configRight.rtsFallbackType = 'FLV'; configRight.fallbackUrl = URL_RIGHT_FLV;
         document.getElementById('current-protocol').textContent = 'ARTC / Low Latency';
       } else {
-        config1.source = STANDARD_FLV_URL1; config2.source = STANDARD_FLV_URL2;
+        configCenter.source = URL_CENTER_FLV;
+        configLeft.source = URL_LEFT_FLV;
+        configRight.source = URL_RIGHT_FLV;
         document.getElementById('current-protocol').textContent = 'FLV / Standard';
       }
       
-      if (player1) player1.dispose();
-      if (player2) player2.dispose();
+      if (playerCenter) playerCenter.dispose();
+      if (playerLeft) playerLeft.dispose();
+      if (playerRight) playerRight.dispose();
       
-      player1 = new Aliplayer(config1, () => updateStatus('Live', 'green'));
-      player2 = new Aliplayer(config2);
+      playerCenter = new Aliplayer(configCenter, () => updateStatus('Main View Ready', 'green'));
+      playerLeft   = new Aliplayer(configLeft);
+      playerRight  = new Aliplayer(configRight);
       
       bindPlayerEvents();
     }
 
     function bindPlayerEvents() {
-        player1.on("rtsTraceId", () => updateStatus('RTS Live', 'green'));
-        player1.on("error", (e) => { updateStatus('Error', 'red'); showError(e.message); });
-        player1.on("play", updateButtonStates);
-        player1.on("pause", updateButtonStates);
+        playerCenter.on("rtsTraceId", () => updateStatus('RTS Active (3 Streams)', 'green'));
+        playerCenter.on("error", (e) => { updateStatus('Main Error', 'red'); showError('Main View: ' + e.message); });
+        playerCenter.on("play", updateButtonStates);
+        playerCenter.on("pause", updateButtonStates);
     }
 
     function updateStatus(text, color) {
@@ -472,46 +431,21 @@
         document.getElementById('status-dot').className = 'dot ' + color;
     }
 
-    function playBothVideos() { if(player1) player1.play(); if(player2) player2.play(); }
-    function pauseBothVideos() { if(player1) player1.pause(); if(player2) player2.pause(); }
-    function toggleMuteBoth() {
-        if(!player1) return;
-        const m = !player1.getMuted();
-        player1.setMuted(m); player2.setMuted(m);
+    function playAllVideos() { if(playerCenter) playerCenter.play(); if(playerLeft) playerLeft.play(); if(playerRight) playerRight.play(); }
+    function pauseAllVideos() { if(playerCenter) playerCenter.pause(); if(playerLeft) playerLeft.pause(); if(playerRight) playerRight.pause(); }
+    function toggleMuteAll() {
+        if(!playerCenter) return;
+        const m = !playerCenter.getMuted();
+        playerCenter.setMuted(m); if(playerLeft) playerLeft.setMuted(m); if(playerRight) playerRight.setMuted(m);
     }
-    
-    function switchToLowLatency() {
-        if(currentMode !== 'low-latency') { currentMode = 'low-latency'; createPlayers(); updateModeButtons(); }
-    }
-    function switchToStandard() {
-        if(currentMode !== 'standard') { currentMode = 'standard'; createPlayers(); updateModeButtons(); }
-    }
-
-    function updateButtonStates() {
-        const playing = player1 && player1.getStatus() === 'playing';
-        document.getElementById('play-btn').style.opacity = playing ? 0.5 : 1;
-    }
-
-    function updateModeButtons() {
-        document.getElementById('low-latency-btn').className = currentMode === 'low-latency' ? 'mode-active' : '';
-        document.getElementById('standard-btn').className = currentMode === 'standard' ? 'mode-active' : '';
-    }
-
-    function showError(msg) {
-        const el = document.getElementById('error-message');
-        el.textContent = msg; el.style.display = 'block';
-        setTimeout(() => el.style.display = 'none', 4000);
-    }
-
-    function startLatencySimulation() {
-        clearInterval(latencyTimer);
-        latencyTimer = setInterval(() => {
-            const el = document.getElementById('latency-value');
-            const base = currentMode === 'low-latency' ? 200 : 3000;
-            el.textContent = Math.floor(Math.random() * 150) + base;
-        }, 1000);
-    }
+    function switchToLowLatency() { if(currentMode !== 'low-latency') { currentMode = 'low-latency'; createPlayers(); updateModeButtons(); } }
+    function switchToStandard() { if(currentMode !== 'standard') { currentMode = 'standard'; createPlayers(); updateModeButtons(); } }
+    function updateButtonStates() { const playing = playerCenter && playerCenter.getStatus() === 'playing'; document.getElementById('play-btn').style.opacity = playing ? 0.5 : 1; }
+    function updateModeButtons() { document.getElementById('low-latency-btn').className = currentMode === 'low-latency' ? 'mode-active' : ''; document.getElementById('standard-btn').className = currentMode === 'standard' ? 'mode-active' : ''; }
+    function showError(msg) { const el = document.getElementById('error-message'); el.textContent = msg; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 4000); }
+    function startLatencySimulation() { clearInterval(latencyTimer); latencyTimer = setInterval(() => { const el = document.getElementById('latency-value'); const base = currentMode === 'low-latency' ? 200 : 3000; el.textContent = Math.floor(Math.random() * 150) + base; }, 1000); }
   </script>
 </body>
 </html>
+
 
